@@ -31,27 +31,3 @@ export const getProduct: RequestHandler = async (
     res.status(500).json({ message: error.message });
   }
 };
-
-export const createProduct: RequestHandler = async (
-  req: Request,
-  res: Response
-) => {
-  const { name, price, description, image, categories } = req.body;
-
-  const foundCategories = await prisma.category.findMany({
-    where: {
-      name: { in: [...categories] },
-    },
-  });
-
-  const data = {
-    name,
-    price,
-    description,
-    image,
-    categories,
-  };
-
-  try {
-  } catch (error) {}
-};
