@@ -31,3 +31,8 @@ export const getProduct: RequestHandler = async (
     res.status(500).json({ message: error.message });
   }
 };
+
+export const createProduct: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {};
