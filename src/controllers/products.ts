@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import type { RequestHandler } from "express";
 import { Request, Response } from "express";
+
 const prisma = new PrismaClient();
 
 export const getAllProducts: RequestHandler = async (
@@ -35,4 +36,6 @@ export const getProduct: RequestHandler = async (
 export const createProduct: RequestHandler = async (
   req: Request,
   res: Response
-) => {};
+) => {
+  res.json({ message: "Product Created!", data: req.body });
+};
