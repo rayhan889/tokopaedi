@@ -24,18 +24,29 @@ model User {
 }
 
 model Product {
-  id          String     @id @default(cuid())
+  id          String                 @id @default(cuid())
   name        String
   price       Int
   description String
   image       String
-  categories  Category[]
+  categories  CategoriesOnProducts[]
 }
 
 model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  products Product[]
+  id       String                 @id @default(cuid())
+  name     String                 @unique
+  products CategoriesOnProducts[]
+}
+
+model CategoriesOnProducts {
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  String
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+  assignedAt DateTime @default(now())
+  assignedBy String
+
+  @@id([productId, categoryId])
 }
 
 enum ROLE {
