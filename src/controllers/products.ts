@@ -84,3 +84,18 @@ export const updateProduct: RequestHandler = async (
     res.status(500).json({ message: error.message });
   }
 };
+
+export const deleteProduct: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    await prisma.product.delete({
+      where: { id: req.params.id },
+    });
+
+    res.send({ message: "Successfully deleted product!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

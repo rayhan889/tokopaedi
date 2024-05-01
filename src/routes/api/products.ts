@@ -4,6 +4,7 @@ import {
   createProduct,
   getProduct,
   updateProduct,
+  deleteProduct,
 } from "../../controllers/products";
 import { validateShcema } from "../../middleware/validationSchema";
 import { CreateProductSchema } from "../../schema/product";
@@ -13,4 +14,5 @@ export default (router: express.Router) => {
   router.get("/:id", getProduct);
   router.post("/", validateShcema(CreateProductSchema), createProduct);
   router.patch("/:id", validateShcema(CreateProductSchema), updateProduct);
+  router.delete("/:id", deleteProduct);
 };
