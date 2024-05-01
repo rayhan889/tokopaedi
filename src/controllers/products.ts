@@ -19,28 +19,34 @@ export const getAllProducts: RequestHandler = async (
   }
 };
 
-export const getSingleProduct: RequestHandler = (
+export const getProduct: RequestHandler = async (
   req: Request,
   res: Response
 ) => {
-  res.send(res.product);
+  try {
+    const product: Product = await prisma.product.findUnique({
+      where: { id: req.params.id },
+      include: { categories: { select: { name: true } } },
+    });
+    res.send(product);
+    if (product === null || !product) {
+      res.status(404).json({ message: "Cannot find product" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const createProduct: RequestHandler = async (
   req: Request,
   res: Response
 ) => {
-  const { name, price, description, image, categories } = req.body;
-
   try {
     const product = await prisma.product.create({
       data: {
-        name,
-        price,
-        description,
-        image,
+        ...req.body,
         categories: {
-          connectOrCreate: categories.map((category: string) => {
+          connectOrCreate: req.body.categories.map((category: string) => {
             return {
               where: { name: category },
               create: { name: category },
@@ -60,16 +66,21 @@ export const updateProduct: RequestHandler = async (
   req: Request,
   res: Response
 ) => {
-  const { name, price, description, image, categories } = req.body;
-  if (name ?? price ?? description ?? image ?? categories) {
-    res.product = {
-      ...res.product,
-      name,
-      price,
-      description,
-      image,
-      categories,
-    };
+  try {
+    const product = await prisma.product.update({
+      where: { id: req.params.id },
+      data: {
+        ...req.body,
+        categories: {
+          connect: req.body.categories.map((category: string) => ({
+            name: category,
+          })),
+        },
+      },
+    });
+
+    res.send({ message: "Product updated!", data: product });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-  res.send(res.product);
 };
