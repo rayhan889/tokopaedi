@@ -8,39 +8,121 @@ datasource db {
 }
 
 model User {
-  id    String  @id @default(cuid())
-  name  String
-  email String  @unique
-  phone String?
-  role  ROLE    @default(USER)
+  id          String        @id @default(cuid())
+  username    String
+  firstName   String
+  lastName    String
+  email       String        @unique
+  password    String
+  phone       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  UserAddress UserAddress[]
+  UserPayment UserPayment[]
 
   @@index([email])
   @@map("users")
 }
 
+model UserAddress {
+  id           String @id @default(cuid())
+  user         User   @relation(fields: [userId], references: [id])
+  userId       String
+  addressLine1 String
+  addressLine2 String
+  city         String
+  postalCode   String
+  country      String
+  phone        String
+  mobilePhone  String
+
+  @@map("user_address")
+}
+
+model UserPayment {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  paymentType String
+  provider    String
+  accountNo   Int
+  expiry      DateTime
+
+  @@map("user_payment")
+}
+
+model AdminType {
+  id          String      @id @default(cuid())
+  type        String
+  permissions String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  adminUsers  AdminUser[]
+
+  @@map("admin_type")
+}
+
+model AdminUser {
+  id        String    @id @default(cuid())
+  username  String
+  firstName String
+  lastName  String
+  email     String    @unique
+  password  String
+  type      AdminType @relation(fields: [typeId], references: [id])
+  typeId    String
+  lastLogin DateTime
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("admin_users")
+}
+
 model Product {
-  id          String     @id @default(cuid())
+  id          String           @id @default(cuid())
   name        String
-  price       Int
+  price       Decimal
+  sku         String           @unique
   description String
   image       String
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  discount    Discount         @relation(fields: [discountId], references: [id])
+  discountId  String
+  quantity    ProductQuantity?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   categories  Category[]
 
+  @@index([sku])
   @@map("products")
 }
 
+model Discount {
+  id             String    @id @default(cuid())
+  name           String    @unique
+  description    String
+  discountPercen Decimal
+  active         Boolean
+  products       Product[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("discounts")
+}
+
 model Category {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  products Product[]
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String
+  products    Product[]
 
   @@map("categories")
 }
 
-enum ROLE {
-  USER
-  EDITOR
-  ADMIN
+model ProductQuantity {
+  id        String   @id @default(cuid())
+  quantity  Int
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
