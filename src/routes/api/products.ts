@@ -13,6 +13,6 @@ export default (router: express.Router) => {
   router.get("/", getAllProducts);
   router.get("/:id", getProduct);
   router.post("/", validateShcema(CreateProductSchema), createProduct);
-  router.patch("/:id", validateShcema(CreateProductSchema), updateProduct);
+  router.patch("/:id", updateProduct);
   router.delete("/:id", deleteProduct);
 };
