@@ -24,6 +24,7 @@
   "dependencies": {
     "@prisma/client": "5.13.0",
     "express": "^4.19.2",
+    "slug": "^9.0.0",
     "zod": "^3.23.4"
   }
 }

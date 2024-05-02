@@ -7,6 +7,9 @@ dependencies:
   express:
     specifier: ^4.19.2
     version: 4.19.2
+  slug:
+    specifier: ^9.0.0
+    version: 9.0.0
   zod:
     specifier: ^3.23.4
     version: 3.23.4
@@ -958,6 +961,11 @@ packages:
     dependencies:
       semver: 7.6.0
     dev: true
+
+  /slug@9.0.0:
+    resolution: {integrity: sha512-ixytnHlpHPWM56heaGgYe/M8tDAcpJcsg/zBuyElbFDOORzMGOeP3Te6iJBRVYu3WQEiWLQPb70Gh9ig/sZgGQ==}
+    hasBin: true
+    dev: false
 
   /statuses@2.0.1:
     resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
