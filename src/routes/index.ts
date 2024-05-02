@@ -1,11 +1,11 @@
 import express from "express";
 
 import products from "./api/products";
+import discounts from "./api/discounts";
 
 const router = express.Router();
 
-export default (): express.Router => {
-  products(router);
+router.use("/products", products);
+router.use("/discounts", discounts);
 
-  return router;
-};
+export default router;
