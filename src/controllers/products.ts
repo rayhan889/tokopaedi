@@ -95,10 +95,21 @@ export const updateProduct: RequestHandler = async (
 ) => {
   try {
     const quantity = req.body.quantity;
-    const discount = req.body.discount;
+    const discountId = req.body.discount;
 
     const date = new Date();
     const formattedDate = date.toISOString();
+
+    const foundProduct = await prisma.product.findUnique({
+      where: {
+        id: req.params.id,
+      },
+      include: {
+        discount: {
+          select: { id: true },
+        },
+      },
+    });
 
     await prisma.product.update({
       where: { id: req.params.id },
@@ -111,26 +122,39 @@ export const updateProduct: RequestHandler = async (
             },
           },
         },
-        discount: discount
+        discount:
+          discountId &&
+          foundProduct.discount &&
+          discountId == foundProduct.discount?.id
+            ? {
+                disconnect: {
+                  id: discountId,
+                },
+              }
+            : (foundProduct.discount &&
+                discountId != foundProduct.discount?.id) ||
+              discountId
+            ? {
+                connect: {
+                  id: discountId,
+                },
+              }
+            : undefined,
+        categories: req.body.categories
           ? {
-              connect: {
-                name: discount,
-              },
+              connectOrCreate: req.body.categories.map(
+                (category: CategorySchema) => {
+                  return {
+                    where: { name: category.name },
+                    create: {
+                      name: category.name,
+                      description: category.description,
+                    },
+                  };
+                }
+              ),
             }
           : undefined,
-        categories: {
-          connectOrCreate: req.body.categories.map(
-            (category: CategorySchema) => {
-              return {
-                where: { name: category.name },
-                create: {
-                  name: category.name,
-                  description: category.description,
-                },
-              };
-            }
-          ),
-        },
         updatedAt: formattedDate,
       },
     });
