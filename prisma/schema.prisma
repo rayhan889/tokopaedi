@@ -8,17 +8,18 @@ datasource db {
 }
 
 model User {
-  id          String        @id @default(cuid())
-  username    String
-  firstName   String
-  lastName    String
-  email       String        @unique
-  password    String
-  phone       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  UserAddress UserAddress[]
-  UserPayment UserPayment[]
+  id              String           @id @default(cuid())
+  username        String
+  firstName       String
+  lastName        String
+  email           String           @unique
+  password        String
+  phone           String?
+  shoppingSession ShoppingSession?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  UserAddress     UserAddress[]
+  UserPayment     UserPayment[]
 
   @@index([email])
   @@map("users")
@@ -88,12 +89,39 @@ model Product {
   discount    Discount?         @relation(fields: [discountId], references: [id])
   discountId  String?
   quantity    ProductInventory?
+  cartItem    CartItem?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   categories  Category[]
 
   @@index([sku])
   @@map("products")
+}
+
+model ShoppingSession {
+  id        String     @id @default(cuid())
+  total     Int
+  cartItems CartItem[]
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+  @@map("shopping_session")
+}
+
+model CartItem {
+  id                String          @id @default(cuid())
+  quantity          Int
+  product           Product         @relation(fields: [productId], references: [id])
+  productId         String          @unique
+  shoppingSession   ShoppingSession @relation(fields: [shoppingSessionId], references: [id])
+  shoppingSessionId String          @unique
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@map("cart_item")
 }
 
 model Discount {
