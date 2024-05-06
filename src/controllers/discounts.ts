@@ -30,17 +30,58 @@ export const getAllDiscounts: RequestHandler = async (
 export const getDiscount: RequestHandler = async (
   req: Request,
   res: Response
-) => {};
+) => {
+  try {
+    const discount: Discount = await prisma.discount.findUnique({
+      where: {
+        id: req.params.id,
+      },
+    });
+    res.send(discount);
+    if (discount == null || !discount) {
+      res.status(404).json({ message: "Cannot find data" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const createDiscount: RequestHandler = async (
   req: Request,
   res: Response
-) => {};
+) => {
+  try {
+    await prisma.discount.create({
+      data: {
+        ...req.body,
+      },
+    });
+
+    res.send({ message: "Discount created!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const updateDiscount: RequestHandler = async (
   req: Request,
   res: Response
-) => {};
+) => {
+  try {
+    await prisma.discount.update({
+      where: {
+        id: req.params.id,
+      },
+      data: {
+        ...req.body,
+      },
+    });
+
+    res.send({ message: "Discount updated!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const deleteDiscount: RequestHandler = async (
   req: Request,
