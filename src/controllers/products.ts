@@ -131,9 +131,7 @@ export const updateProduct: RequestHandler = async (
                   id: discountId,
                 },
               }
-            : (foundProduct.discount &&
-                discountId != foundProduct.discount?.id) ||
-              discountId
+            : discountId
             ? {
                 connect: {
                   id: discountId,
