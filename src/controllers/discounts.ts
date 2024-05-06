@@ -86,4 +86,14 @@ export const updateDiscount: RequestHandler = async (
 export const deleteDiscount: RequestHandler = async (
   req: Request,
   res: Response
-) => {};
+) => {
+  try {
+    await prisma.discount.delete({
+      where: { id: req.params.id },
+    });
+
+    res.send({ message: "Discount deleted!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
