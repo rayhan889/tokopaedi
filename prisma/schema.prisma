@@ -16,6 +16,7 @@ model User {
   password        String
   phone           String?
   shoppingSession ShoppingSession?
+  orderDetails    OrderDetails?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   UserAddress     UserAddress[]
@@ -90,6 +91,7 @@ model Product {
   discountId  String?
   quantity    ProductInventory?
   cartItem    CartItem?
+  orderItem   OrderItem?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   categories  Category[]
@@ -100,7 +102,7 @@ model Product {
 
 model ShoppingSession {
   id        String     @id @default(cuid())
-  total     Int
+  total     Decimal
   cartItems CartItem[]
   user      User       @relation(fields: [userId], references: [id])
   userId    String     @unique
@@ -122,6 +124,45 @@ model CartItem {
   updatedAt         DateTime        @updatedAt
 
   @@map("cart_item")
+}
+
+model OrderDetails {
+  id        String          @id @default(cuid())
+  total     Decimal
+  orderItem OrderItem[]
+  user      User            @relation(fields: [userId], references: [id])
+  userId    String          @unique
+  payment   PaymentDetails?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([userId])
+  @@map("order_details")
+}
+
+model OrderItem {
+  id            String       @id @default(cuid())
+  quantity      Int
+  product       Product      @relation(fields: [productId], references: [id])
+  productId     String       @unique
+  orderDetail   OrderDetails @relation(fields: [orderDetailId], references: [id])
+  orderDetailId String       @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([orderDetailId, productId])
+  @@map("order_item")
+}
+
+model PaymentDetails {
+  id        String       @id @default(cuid())
+  amount    Decimal
+  provider  String
+  status    String
+  order     OrderDetails @relation(fields: [orderId], references: [id])
+  orderId   String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 }
 
 model Discount {
