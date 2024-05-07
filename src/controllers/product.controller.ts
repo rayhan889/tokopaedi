@@ -45,10 +45,9 @@ export const getProduct: RequestHandler = async (
         discount: true,
       },
     });
+    if (product === null || !product)
+      return res.status(404).json({ message: "Cannot find product" });
     res.send(product);
-    if (product === null || !product) {
-      res.status(404).json({ message: "Cannot find product" });
-    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
