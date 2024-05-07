@@ -10,4 +10,10 @@ export const RegisterSchema = z.object({
   phone: z.string().min(2).refine(validator.isMobilePhone).nullable(),
 });
 
+export const LoginSchema = z.object({
+  email: z.string().email("This is not an valid email"),
+  password: z.string(),
+});
+
 export type RegisterSchemaType = z.infer<typeof RegisterSchema>;
+export type LoginSchemaType = z.infer<typeof LoginSchema>;
