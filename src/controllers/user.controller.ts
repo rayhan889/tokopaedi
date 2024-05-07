@@ -6,10 +6,7 @@ import { RegisterSchemaType } from "../schema/user";
 
 const prisma = new PrismaClient();
 
-export const handleRegister: RequestHandler = async (
-  req: Request,
-  res: Response
-) => {
+export const register: RequestHandler = async (req: Request, res: Response) => {
   const {
     username,
     firstName,
