@@ -15,6 +15,7 @@ model User {
   email           String           @unique
   password        String
   phone           String?
+  refreshToken    String?
   shoppingSession ShoppingSession?
   orderDetails    OrderDetails?
   createdAt       DateTime         @default(now())
@@ -27,16 +28,17 @@ model User {
 }
 
 model UserAddress {
-  id           String @id @default(cuid())
-  user         User   @relation(fields: [userId], references: [id])
+  id           String  @id @default(cuid())
+  user         User    @relation(fields: [userId], references: [id])
   userId       String
   addressLine1 String
   addressLine2 String
   city         String
   postalCode   String
   country      String
-  phone        String
-  mobilePhone  String
+  phone        String?
+  refreshToken String?
+  mobilePhone  String?
 
   @@map("user_address")
 }
