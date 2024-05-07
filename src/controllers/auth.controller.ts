@@ -27,9 +27,8 @@ export const register: RequestHandler = async (req: Request, res: Response) => {
     select: { email: true },
   });
 
-  if (isEmailDuplicate) {
+  if (isEmailDuplicate)
     return res.status(409).json({ message: "Email already exist!" });
-  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -71,7 +70,7 @@ export const signin: RequestHandler = async (req: Request, res: Response) => {
       {
         userInfo: {
           username: foundUser.username,
-          email: foundUser.email,
+          email,
         },
       },
       process.env.ACCESS_TOKEN,
@@ -79,12 +78,27 @@ export const signin: RequestHandler = async (req: Request, res: Response) => {
         expiresIn: "30s",
       }
     );
-    const refreshToken = await jwt.sign(
-      { email: foundUser.email },
-      process.env.REFRESH_TOKEN,
-      {
-        expiresIn: "1d",
-      }
-    );
+    const refreshToken = await jwt.sign({ email }, process.env.REFRESH_TOKEN, {
+      expiresIn: "1d",
+    });
+
+    try {
+      await prisma.user.update({
+        where: {
+          email,
+        },
+        data: {
+          email,
+          refreshToken,
+        },
+      });
+      res.cookie("jwt", refreshToken, {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+      res.json({ accessToken });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
   }
 };
