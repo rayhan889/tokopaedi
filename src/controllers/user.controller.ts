@@ -43,7 +43,7 @@ export const handleRegister: RequestHandler = async (
         phone,
       },
     });
-    res.staus(201).send(user);
+    res.status(201).send(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
