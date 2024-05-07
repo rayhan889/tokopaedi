@@ -5,7 +5,7 @@ import {
   deleteDiscount,
   updateDiscount,
   createDiscount,
-} from "../../controllers/discounts";
+} from "../../controllers/discount.controller";
 import { validateShcema } from "../../middleware/validationSchema";
 import { CreateDiscountSchema } from "../../schema/discount";
 

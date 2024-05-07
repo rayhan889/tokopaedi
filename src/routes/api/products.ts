@@ -5,7 +5,7 @@ import {
   getProduct,
   updateProduct,
   deleteProduct,
-} from "../../controllers/products";
+} from "../../controllers/product.controller";
 import { validateShcema } from "../../middleware/validationSchema";
 import { CreateProductSchema } from "../../schema/product";
 

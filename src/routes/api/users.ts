@@ -1,5 +1,5 @@
 import express from "express";
-import { handleRegister } from "../../controllers/register";
+import { handleRegister } from "../../controllers/user.controller";
 import { validateShcema } from "../../middleware/validationSchema";
 import { RegisterSchema } from "../../schema/user";
 
