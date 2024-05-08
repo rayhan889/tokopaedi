@@ -121,7 +121,7 @@ model CartItem {
   product           Product         @relation(fields: [productId], references: [id])
   productId         String          @unique
   shoppingSession   ShoppingSession @relation(fields: [shoppingSessionId], references: [id])
-  shoppingSessionId String          @unique
+  shoppingSessionId String
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
