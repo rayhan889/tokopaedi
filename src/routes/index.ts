@@ -9,8 +9,8 @@ import { verifyToken } from "../middleware/verifyToken";
 const router = express.Router();
 
 router.use("/auth", auth);
-router.use("/products", verifyToken, products);
+router.use("/products", products);
 router.use("/discounts", verifyToken, discounts);
-router.use("/orders", verifyToken, orders);
+router.use("/orders", orders);
 
 export default router;
