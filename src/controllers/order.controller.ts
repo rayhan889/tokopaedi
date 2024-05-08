@@ -1,10 +1,23 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Product } from "@prisma/client";
 import type { RequestHandler } from "express";
 import { Request, Response } from "express";
 import { AddToCartSchemaType } from "../schema/order";
-import { Product } from "@prisma/client";
+import { JwtPayload } from "jsonwebtoken";
 
 const prisma = new PrismaClient();
+
+export interface UserRequest extends Request {
+  user: {
+    userInfo:
+      | JwtPayload
+      | {
+          email: string;
+          username: string;
+          iat: number;
+          exp: number;
+        };
+  };
+}
 
 export const getAllOrders: RequestHandler = async (
   req: Request,
@@ -23,35 +36,7 @@ export const getOrder: RequestHandler = async (
 export const addProductToCart: RequestHandler = async (
   req: Request,
   res: Response
-) => {
-  const { productId, quantity }: AddToCartSchemaType = req.body;
-
-  const foundProduct: Product = await prisma.product.findUnique({
-    where: {
-      id: productId,
-    },
-  });
-
-  if (foundProduct != null) {
-    try {
-      await prisma.cartItem.create({
-        data: {
-          product: {
-            connect: { id: foundProduct.id },
-          },
-          shoppingSession: {
-            connect: {
-              id: "asd",
-            },
-          },
-          quantity,
-        },
-      });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
-  }
-};
+) => {};
 
 // CHECKOUT (ORDER) PROCESS
 // assign products that includes in cart item as temporary into order items
