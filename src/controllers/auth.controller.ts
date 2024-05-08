@@ -78,9 +78,13 @@ export const signin: RequestHandler = async (req: Request, res: Response) => {
         expiresIn: "30s",
       }
     );
-    const refreshToken = await jwt.sign({ email }, process.env.REFRESH_TOKEN, {
-      expiresIn: "1d",
-    });
+    const refreshToken = await jwt.sign(
+      { username: foundUser.username, email },
+      process.env.REFRESH_TOKEN,
+      {
+        expiresIn: "1d",
+      }
+    );
 
     try {
       await prisma.user.update({
