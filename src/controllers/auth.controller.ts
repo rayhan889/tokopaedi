@@ -102,3 +102,33 @@ export const signin: RequestHandler = async (req: Request, res: Response) => {
     }
   }
 };
+
+export const signout: RequestHandler = async (req: Request, res: Response) => {
+  const cookie = req.cookies;
+  if (!cookie?.jwt) return res.sendStatus(204);
+
+  const refreshToken = cookie.jwt;
+
+  const { refreshToken: refreshTokenUser, email } = await prisma.user.findFirst(
+    {
+      where: { refreshToken },
+      select: { refreshToken: true, email: true },
+    }
+  );
+  if (!refreshTokenUser) {
+    res.clearCookie("jwt", refreshToken);
+  }
+
+  try {
+    await prisma.user.update({
+      where: { email },
+      data: {
+        refreshToken: null,
+      },
+    });
+    res.clearCookie("jwt", refreshToken);
+    res.json({ message: "Logged out!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
