@@ -55,6 +55,7 @@ export const signin: RequestHandler = async (req: Request, res: Response) => {
   const foundUser = await prisma.user.findUnique({
     where: { email },
     select: {
+      id: true,
       email: true,
       username: true,
       password: true,
@@ -94,8 +95,19 @@ export const signin: RequestHandler = async (req: Request, res: Response) => {
         data: {
           email,
           refreshToken,
+          shoppingSession: {
+            connectOrCreate: {
+              where: {
+                userId: foundUser.id,
+              },
+              create: {
+                total: 0,
+              },
+            },
+          },
         },
       });
+
       res.cookie("jwt", refreshToken, {
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000,
