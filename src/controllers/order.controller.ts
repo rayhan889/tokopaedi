@@ -1,4 +1,4 @@
-import { PrismaClient, Product } from "@prisma/client";
+import { PrismaClient, Product, ShoppingSession } from "@prisma/client";
 import type { RequestHandler } from "express";
 import { Request, Response } from "express";
 import { AddToCartSchemaType } from "../schema/order";
@@ -56,11 +56,12 @@ export const addProductToCart: RequestHandler = async (
 
   if (product.quantity.quantity < quantity) return res.sendStatus(400);
 
-  const shoppingSession = await prisma.shoppingSession.findUnique({
-    where: {
-      userId: user.id,
-    },
-  });
+  const shoppingSession: ShoppingSession =
+    await prisma.shoppingSession.findUnique({
+      where: {
+        userId: user.id,
+      },
+    });
   try {
     const cartItem = await prisma.cartItem.upsert({
       create: {
@@ -90,6 +91,9 @@ export const addProductToCart: RequestHandler = async (
               cartItemId: cartItem.id,
             },
           },
+        },
+        total: {
+          increment: quantity * (product.price as any),
         },
       },
     });
