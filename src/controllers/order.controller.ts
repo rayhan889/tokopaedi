@@ -1,4 +1,9 @@
-import { PrismaClient, Product, ShoppingSession } from "@prisma/client";
+import {
+  CartItem,
+  PrismaClient,
+  Product,
+  ShoppingSession,
+} from "@prisma/client";
 import type { RequestHandler } from "express";
 import { Request, Response } from "express";
 import { AddToCartSchemaType } from "../schema/order";
@@ -99,6 +104,83 @@ export const addProductToCart: RequestHandler = async (
     });
 
     res.status(200).json({ message: "Product added to cart!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateProductAtCart: RequestHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const orderId = req.params.id;
+
+  const { productId, quantity }: AddToCartSchemaType = req.body;
+
+  const userInfo = (req as UserRequest).user.userInfo;
+
+  const user = await prisma.user.findUnique({
+    where: { email: userInfo.email },
+  });
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    include: {
+      quantity: true,
+    },
+  });
+
+  if (!product) return res.sendStatus(404);
+
+  if (product.quantity.quantity < quantity) return res.sendStatus(400);
+
+  const shoppingSession = await prisma.shoppingSession.findUnique({
+    where: {
+      userId: user.id,
+    },
+  });
+
+  const { quantity: oldQuantity } =
+    await prisma.shoppingSessionCartItem.findUnique({
+      where: {
+        shopSessionCartItemId: {
+          shoppingSessionId: shoppingSession.id,
+          cartItemId: orderId,
+        },
+      },
+    });
+  try {
+    const cartItem = prisma.shoppingSessionCartItem.update({
+      where: {
+        shopSessionCartItemId: {
+          shoppingSessionId: shoppingSession.id,
+          cartItemId: orderId,
+        },
+      },
+      data: {
+        quantity,
+      },
+    });
+
+    const shoppingSessionUpdated = prisma.shoppingSession.update({
+      where: {
+        userId: user.id,
+      },
+      data: {
+        total:
+          quantity > oldQuantity
+            ? {
+                increment: (quantity - oldQuantity) * (product.price as any),
+              }
+            : {
+                decrement: (oldQuantity - quantity) * (product.price as any),
+              },
+      },
+    });
+
+    await prisma.$transaction([cartItem, shoppingSessionUpdated]);
+
+    res.status(200).json({ message: "Product at cart updated!" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
