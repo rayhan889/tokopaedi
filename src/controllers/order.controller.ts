@@ -36,7 +36,64 @@ export const getOrder: RequestHandler = async (
 export const addProductToCart: RequestHandler = async (
   req: Request,
   res: Response
-) => {};
+) => {
+  const { productId, quantity }: AddToCartSchemaType = req.body;
+
+  const userInfo = (req as UserRequest).user.userInfo;
+
+  const user = await prisma.user.findUnique({
+    where: { email: userInfo.email },
+  });
+
+  const product: Product = await prisma.product.findUnique({
+    where: { id: productId },
+  });
+
+  if (!product) return res.sendStatus(404);
+
+  const shoppingSession = await prisma.shoppingSession.findUnique({
+    where: {
+      userId: user.id,
+    },
+  });
+  try {
+    const cartItem = await prisma.cartItem.upsert({
+      create: {
+        productId,
+      },
+      where: {
+        productId,
+      },
+      update: {},
+    });
+
+    await prisma.shoppingSession.update({
+      where: {
+        userId: user.id,
+      },
+      data: {
+        shoppingSessionCartItems: {
+          connectOrCreate: {
+            where: {
+              shopSessionCartItemId: {
+                shoppingSessionId: shoppingSession.id,
+                cartItemId: cartItem.id,
+              },
+            },
+            create: {
+              quantity,
+              cartItemId: cartItem.id,
+            },
+          },
+        },
+      },
+    });
+
+    res.status(200).json({ message: "Product added to cart!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // CHECKOUT (ORDER) PROCESS
 // assign products that includes in cart item as temporary into order items
