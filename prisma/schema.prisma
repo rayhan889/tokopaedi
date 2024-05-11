@@ -103,27 +103,40 @@ model Product {
 }
 
 model ShoppingSession {
-  id        String     @id @default(cuid())
-  total     Decimal
-  cartItems CartItem[]
-  user      User       @relation(fields: [userId], references: [id])
-  userId    String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id                       String                    @id @default(cuid())
+  total                    Decimal
+  user                     User                      @relation(fields: [userId], references: [id])
+  userId                   String                    @unique
+  shoppingSessionCartItems ShoppingSessionCartItem[]
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
 
   @@index([userId])
   @@map("shopping_session")
 }
 
-model CartItem {
+model ShoppingSessionCartItem {
   id                String          @id @default(cuid())
   quantity          Int
-  product           Product         @relation(fields: [productId], references: [id])
-  productId         String          @unique
   shoppingSession   ShoppingSession @relation(fields: [shoppingSessionId], references: [id])
   shoppingSessionId String
+  cartItem          CartItem        @relation(fields: [cartItemId], references: [id])
+  cartItemId        String
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
+
+  @@unique(name: "shopSessionCartItemId", [shoppingSessionId, cartItemId])
+  @@map("shoppingSession_cartItem")
+}
+
+model CartItem {
+  id String @id @default(cuid())
+
+  product                  Product                   @relation(fields: [productId], references: [id])
+  productId                String                    @unique
+  shoppingSessionCartItems ShoppingSessionCartItem[]
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
 
   @@map("cart_item")
 }
