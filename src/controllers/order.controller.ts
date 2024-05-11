@@ -45,11 +45,16 @@ export const addProductToCart: RequestHandler = async (
     where: { email: userInfo.email },
   });
 
-  const product: Product = await prisma.product.findUnique({
+  const product = await prisma.product.findUnique({
     where: { id: productId },
+    include: {
+      quantity: true,
+    },
   });
 
   if (!product) return res.sendStatus(404);
+
+  if (product.quantity.quantity < quantity) return res.sendStatus(400);
 
   const shoppingSession = await prisma.shoppingSession.findUnique({
     where: {
