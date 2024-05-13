@@ -8,6 +8,7 @@ import type { RequestHandler } from "express";
 import { Request, Response } from "express";
 import { AddToCartSchemaType } from "../schema/order";
 import { JwtPayload } from "jsonwebtoken";
+import { Decimal } from "@prisma/client/runtime/library";
 
 const prisma = new PrismaClient();
 
@@ -24,10 +25,78 @@ export interface UserRequest extends Request {
   };
 }
 
-export const getAllOrders: RequestHandler = async (
+export interface Orders {
+  total: Decimal;
+  cartItems: {
+    id: string;
+    quantity: number;
+    cartItem: {
+      product: {
+        id: string;
+        name: string;
+        price: Decimal;
+      };
+    };
+  }[];
+}
+
+export const getAllItemsAtCart: RequestHandler = async (
   req: Request,
   res: Response
-) => {};
+) => {
+  try {
+    const userInfo = (req as UserRequest).user.userInfo;
+
+    const { id: userId } = await prisma.user.findUnique({
+      where: { email: userInfo.email },
+      select: {
+        id: true,
+      },
+    });
+
+    const { id: shoppingSessionId, total } =
+      await prisma.shoppingSession.findUnique({
+        where: {
+          userId,
+        },
+        select: {
+          total: true,
+          id: true,
+        },
+      });
+
+    const shoppingSessionCartItems =
+      await prisma.shoppingSessionCartItem.findMany({
+        where: {
+          shoppingSessionId,
+        },
+        select: {
+          id: true,
+          quantity: true,
+          cartItem: {
+            select: {
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+    const orders: Orders = {
+      total,
+      cartItems: shoppingSessionCartItems,
+    };
+
+    res.status(200).json({ orders });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const getOrder: RequestHandler = async (
   req: Request,

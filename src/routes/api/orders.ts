@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  getAllOrders,
+  getAllItemsAtCart,
   getOrder,
   createOrder,
   addProductToCart,
@@ -10,7 +10,7 @@ import { verifyToken } from "../../middleware/verifyToken";
 
 const router = express.Router();
 
-router.get("/", getAllOrders);
+router.get("/", verifyToken, getAllItemsAtCart);
 router.get("/:id", getOrder);
 router.post("/cart", verifyToken, addProductToCart);
 router.post("/", createOrder);
