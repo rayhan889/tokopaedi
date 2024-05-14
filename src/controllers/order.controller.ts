@@ -40,6 +40,13 @@ export interface Orders {
   }[];
 }
 
+export interface OrderItems {
+  quantity: number;
+  orderItem: {
+    id: string;
+  };
+}
+
 export const getAllItemsAtCart: RequestHandler = async (
   req: Request,
   res: Response
@@ -182,7 +189,7 @@ export const updateProductAtCart: RequestHandler = async (
   req: Request,
   res: Response
 ) => {
-  const orderId = req.params.id;
+  const cartItemId = req.params.id;
 
   const { productId, quantity }: AddToCartSchemaType = req.body;
 
@@ -214,7 +221,7 @@ export const updateProductAtCart: RequestHandler = async (
       where: {
         shopSessionCartItemId: {
           shoppingSessionId: shoppingSession.id,
-          cartItemId: orderId,
+          cartItemId,
         },
       },
     });
@@ -223,7 +230,7 @@ export const updateProductAtCart: RequestHandler = async (
       where: {
         shopSessionCartItemId: {
           shoppingSessionId: shoppingSession.id,
-          cartItemId: orderId,
+          cartItemId,
         },
       },
       data: {
@@ -262,4 +269,101 @@ export const updateProductAtCart: RequestHandler = async (
 export const createOrder: RequestHandler = async (
   req: Request,
   res: Response
-) => {};
+) => {
+  const userInfo = (req as UserRequest).user.userInfo;
+
+  const { id: userId } = await prisma.user.findUnique({
+    where: {
+      email: userInfo.email,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const cartItemIds: string[] = req.body.cartItemIds;
+
+  if (!cartItemIds) return res.sendStatus(400);
+
+  // get cart items
+  const { id: shoppingSessionId, total } =
+    await prisma.shoppingSession.findUnique({
+      where: {
+        userId,
+      },
+      select: {
+        id: true,
+        total: true,
+      },
+    });
+
+  const cartItems = await prisma.shoppingSessionCartItem.findMany({
+    where: {
+      shoppingSessionId,
+      cartItemId: {
+        in: cartItemIds.map(cartItemId => cartItemId),
+      },
+    },
+    select: {
+      quantity: true,
+      cartItem: {
+        select: {
+          productId: true,
+        },
+      },
+    },
+  });
+
+  try {
+    await prisma.orderItem.createMany({
+      data: cartItems.map(cartItem => {
+        return {
+          productId: cartItem.cartItem.productId,
+        };
+      }),
+    });
+
+    const orderItems = await prisma.product.findMany({
+      where: {
+        id: {
+          in: cartItems.map(cartItem => {
+            return cartItem.cartItem.productId;
+          }),
+        },
+      },
+      select: {
+        orderItem: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    // make order details
+    const orderDetails = await prisma.orderDetails.create({
+      data: {
+        userId,
+        total,
+      },
+    });
+
+    const orderCartItems: OrderItems[] = cartItems.map((item, index) => {
+      const { cartItem, ...rest } = item;
+      return { ...rest, ...orderItems[index] };
+    });
+
+    await prisma.orderDetailsItem.createMany({
+      data: orderCartItems.map(({ orderItem, quantity }) => {
+        return {
+          quantity: quantity,
+          orderDetailsId: orderDetails.id,
+          orderItemId: orderItem.id,
+        };
+      }),
+    });
+    res.status(200).json({ message: "Order created!" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
