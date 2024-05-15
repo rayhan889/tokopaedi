@@ -321,6 +321,7 @@ export const createOrder: RequestHandler = async (
           productId: cartItem.cartItem.productId,
         };
       }),
+      skipDuplicates: true,
     });
 
     const orderItems = await prisma.product.findMany({
@@ -362,6 +363,38 @@ export const createOrder: RequestHandler = async (
         };
       }),
     });
+
+    // cleanup session
+    const cleanupShoppingSessionCartItem =
+      prisma.shoppingSessionCartItem.deleteMany({
+        where: {
+          shoppingSessionId,
+          cartItemId: {
+            in: cartItemIds.map((cartItemId: string) => cartItemId),
+          },
+        },
+      });
+
+    const cleanupShoppingSession = prisma.shoppingSession.delete({
+      where: {
+        userId,
+      },
+    });
+
+    // create brand new shopping session for next transaction
+    const createNewShoppingSession = prisma.shoppingSession.create({
+      data: {
+        userId,
+        total: 0,
+      },
+    });
+
+    await prisma.$transaction([
+      cleanupShoppingSessionCartItem,
+      cleanupShoppingSession,
+      createNewShoppingSession,
+    ]);
+
     res.status(200).json({ message: "Order created!" });
   } catch (error) {
     res.status(500).json({ message: error.message });
