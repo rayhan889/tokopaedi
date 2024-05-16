@@ -364,6 +364,20 @@ export const createOrder: RequestHandler = async (
       }),
     });
 
+    // reduce the quantity of product
+    for (const cartItem of cartItems) {
+      await prisma.productInventory.update({
+        where: {
+          productId: cartItem.cartItem.productId,
+        },
+        data: {
+          quantity: {
+            decrement: cartItem.quantity,
+          },
+        },
+      });
+    }
+
     // cleanup session
     const cleanupShoppingSessionCartItem =
       prisma.shoppingSessionCartItem.deleteMany({
