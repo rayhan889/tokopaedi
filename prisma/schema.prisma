@@ -17,7 +17,7 @@ model User {
   phone           String?
   refreshToken    String?
   shoppingSession ShoppingSession?
-  orderDetails    OrderDetails?
+  orderDetails    OrderDetails[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   UserAddress     UserAddress[]
@@ -145,7 +145,7 @@ model OrderDetails {
   id               String             @id @default(cuid())
   total            Decimal
   user             User               @relation(fields: [userId], references: [id])
-  userId           String             @unique
+  userId           String
   orderDetailsItem OrderDetailsItem[]
   payment          PaymentDetails?
   createdAt        DateTime           @default(now())
