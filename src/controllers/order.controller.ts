@@ -282,6 +282,7 @@ export const createOrder: RequestHandler = async (
   });
 
   const cartItemIds: string[] = req.body.cartItemIds;
+  const paymentProvider = req.body.paymentProvider;
 
   if (!cartItemIds) return res.sendStatus(400);
 
@@ -346,6 +347,13 @@ export const createOrder: RequestHandler = async (
       data: {
         userId,
         total,
+        payment: {
+          create: {
+            provider: paymentProvider,
+            amount: total,
+            status: "pending",
+          },
+        },
       },
     });
 
