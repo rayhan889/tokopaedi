@@ -15,5 +15,15 @@ export const LoginSchema = z.object({
   password: z.string(),
 });
 
+export const UserAddressSchema = z.object({
+  id: z.string().nullable().optional(),
+  addressLine1: z.string().min(5),
+  addressLine2: z.string().min(5),
+  postalCode: z.string().min(5),
+  city: z.string().min(2),
+  country: z.string().min(2),
+});
+
 export type RegisterSchemaType = z.infer<typeof RegisterSchema>;
 export type LoginSchemaType = z.infer<typeof LoginSchema>;
+export type UserAddressSchemaType = z.infer<typeof UserAddressSchema>;
