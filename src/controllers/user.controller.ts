@@ -73,6 +73,15 @@ export const getUser: RequestHandler = async (req: Request, res: Response) => {
             },
           },
         },
+        UserAddress: {
+          select: {
+            addressLine1: true,
+            addressLine2: true,
+            city: true,
+            country: true,
+            postalCode: true,
+          },
+        },
       },
     });
 
@@ -92,7 +101,22 @@ export const updateUser: RequestHandler = async (
 
   if (!req.body) return res.sendStatus(400);
 
-  // TODO: invalidate token if user change email or password
+  // invalidate token if user change email or password
+  if (req.body.email || req.body.password) {
+    const cookie = req.cookies;
+
+    if (!cookie) res.sendStatus(204);
+
+    const refreshToken = cookie.jwt;
+
+    await prisma.user.update({
+      where: { email: userInfo.email },
+      data: {
+        refreshToken: null,
+      },
+    });
+    res.clearCookie("jwt", refreshToken);
+  }
 
   try {
     await prisma.user.update({
