@@ -130,6 +130,13 @@ export const addProductToCart: RequestHandler = async (
     where: { id: productId },
     include: {
       quantity: true,
+      discount: {
+        select: {
+          active: true,
+          name: true,
+          discountPercent: true,
+        },
+      },
     },
   });
 
@@ -143,6 +150,16 @@ export const addProductToCart: RequestHandler = async (
         userId: user.id,
       },
     });
+
+  // count order total, if there's any discount, then give it that disocunt cut to total
+  const total =
+    !product.discount && !product.discount?.active
+      ? quantity * (product.price as any)
+      : (quantity *
+          (product.price as any) *
+          (product.discount.discountPercent as any)) /
+        100;
+
   try {
     const cartItem = await prisma.cartItem.upsert({
       create: {
@@ -174,7 +191,7 @@ export const addProductToCart: RequestHandler = async (
           },
         },
         total: {
-          increment: quantity * (product.price as any),
+          increment: total,
         },
       },
     });
@@ -310,6 +327,11 @@ export const createOrder: RequestHandler = async (
       cartItem: {
         select: {
           productId: true,
+          product: {
+            select: {
+              price: true,
+            },
+          },
         },
       },
     },
@@ -346,11 +368,19 @@ export const createOrder: RequestHandler = async (
     const orderDetails = await prisma.orderDetails.create({
       data: {
         userId,
-        total,
+        total: cartItems.reduce(
+          (acc, { quantity, cartItem }) =>
+            acc + Number(quantity) * Number(cartItem.product.price),
+          0
+        ),
         payment: {
           create: {
             provider: paymentProvider,
-            amount: total,
+            amount: cartItems.reduce(
+              (acc, { quantity, cartItem }) =>
+                acc + Number(quantity) * Number(cartItem.product.price),
+              0
+            ),
             status: "pending",
           },
         },
@@ -390,31 +420,32 @@ export const createOrder: RequestHandler = async (
     const cleanupShoppingSessionCartItem =
       prisma.shoppingSessionCartItem.deleteMany({
         where: {
-          shoppingSessionId,
           cartItemId: {
             in: cartItemIds.map((cartItemId: string) => cartItemId),
           },
         },
       });
 
-    const cleanupShoppingSession = prisma.shoppingSession.delete({
+    // update shopping session
+    const updateShoppingSession = prisma.shoppingSession.update({
       where: {
         userId,
       },
-    });
-
-    // create brand new shopping session for next transaction
-    const createNewShoppingSession = prisma.shoppingSession.create({
       data: {
-        userId,
-        total: 0,
+        total: {
+          decrement: cartItems.reduce(
+            (acc, { quantity, cartItem }) =>
+              acc + Number(quantity) * Number(cartItem.product.price),
+            0
+          ),
+        },
       },
     });
 
     await prisma.$transaction([
       cleanupShoppingSessionCartItem,
-      cleanupShoppingSession,
-      createNewShoppingSession,
+      // cleanupShoppingSession,
+      updateShoppingSession,
     ]);
 
     res.status(200).json({ message: "Order created!" });
