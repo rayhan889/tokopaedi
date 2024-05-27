@@ -151,7 +151,7 @@ export const addProductToCart: RequestHandler = async (
       },
     });
 
-  // count order total, if there's any discount, then give it that disocunt cut to total
+  // count order total, if there's any discount, then give it that discount cut to total
   const total =
     !product.discount && !product.discount?.active
       ? quantity * (product.price as any)
@@ -330,12 +330,33 @@ export const createOrder: RequestHandler = async (
           product: {
             select: {
               price: true,
+              discount: {
+                select: {
+                  discountPercent: true,
+                  active: true,
+                },
+              },
             },
           },
         },
       },
     },
   });
+
+  // calculate total
+  const accumTotal = cartItems.reduce((acc, { quantity, cartItem }) => {
+    if (!cartItem.product.discount || !cartItem.product.discount?.active) {
+      return acc + Number(quantity) * Number(cartItem.product.price);
+    } else {
+      return (
+        acc +
+        (Number(quantity) *
+          Number(cartItem.product.price) *
+          (cartItem.product.discount.discountPercent as any)) /
+          100
+      );
+    }
+  }, 0);
 
   try {
     await prisma.orderItem.createMany({
@@ -368,19 +389,11 @@ export const createOrder: RequestHandler = async (
     const orderDetails = await prisma.orderDetails.create({
       data: {
         userId,
-        total: cartItems.reduce(
-          (acc, { quantity, cartItem }) =>
-            acc + Number(quantity) * Number(cartItem.product.price),
-          0
-        ),
+        total: accumTotal,
         payment: {
           create: {
             provider: paymentProvider,
-            amount: cartItems.reduce(
-              (acc, { quantity, cartItem }) =>
-                acc + Number(quantity) * Number(cartItem.product.price),
-              0
-            ),
+            amount: accumTotal,
             status: "pending",
           },
         },
@@ -420,6 +433,7 @@ export const createOrder: RequestHandler = async (
     const cleanupShoppingSessionCartItem =
       prisma.shoppingSessionCartItem.deleteMany({
         where: {
+          shoppingSessionId,
           cartItemId: {
             in: cartItemIds.map((cartItemId: string) => cartItemId),
           },
@@ -433,11 +447,7 @@ export const createOrder: RequestHandler = async (
       },
       data: {
         total: {
-          decrement: cartItems.reduce(
-            (acc, { quantity, cartItem }) =>
-              acc + Number(quantity) * Number(cartItem.product.price),
-            0
-          ),
+          decrement: accumTotal,
         },
       },
     });
